@@ -1,6 +1,6 @@
 {
   "command_timeout": 5,
-  "templates_folder": "_Templates",
+  "templates_folder": "templates",
   "templates_pairs": [
     [
       "",
@@ -32,7 +32,6 @@
     ""
   ],
   "startup_templates": [
-    "_Templates/Caretalk Feature.md",
     ""
   ],
   "intellisense_render": 1

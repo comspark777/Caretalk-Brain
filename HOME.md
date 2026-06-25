@@ -12,7 +12,7 @@
 | [[domains/Schedule/_INDEX\|Schedule]] | (기록 없음) | — |
 | [[domains/Contribution/_INDEX\|Contribution]] | (기록 없음) | — |
 | [[domains/Intake/_INDEX\|Intake]] | (기록 없음) | — |
-| [[domains/Infra-DB/_INDEX\|Infra-DB]] | 세컨드 브레인 구축 완료(재시작 검증 대기) | 2026-06-25 |
+| [[domains/Infra-DB/_INDEX\|Infra-DB]] | 세컨드 브레인 완료·GitHub 백업, 재시작 검증만 남음 | 2026-06-25 |
 
 ## 사용법
 - 저장: `"오늘 거 저장해줘"` 또는 `/wiki-save [도메인]`
