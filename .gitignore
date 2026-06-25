@@ -1,0 +1,15 @@
+# Obsidian — 머신별 휘발성 상태 (추적 안 함)
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+.obsidian/cache
+.obsidian/.hotkeys-config-backup
+
+# 휴지통
+.trash/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# OMC 세션 상태 (볼트와 무관, 추적 안 함)
+.omc/
