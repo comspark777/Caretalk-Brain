@@ -1,11 +1,24 @@
 ---
 domain: Xero
-updated: 2026-07-02
-status: 실조직(ODC Payroll) 연결 완료 + Auto-Map 요율 22/48·직원 41/234. 남은 것=매핑 마무리(26조합·193명, 회계확인 3건)·CareTalk 전용 $1.00 Pay Item 3개 생성·소량 전송 골든패스·JS 커밋·테스트DB Area 스크립트
+updated: 2026-07-07
+status: 멀티테넌트 라이브 + 관리자 매뉴얼 docx 완성(실서버 캡처 13장, bDocs). 실서버 배치 #9=unmapped 136·missing 39·period BLOCK 76. 남은 것=매칭보강 패치(승인대기)·회계 3건·PayItem $1.00×2조직·컷오버 합의 후 골든패스·접이식UI 머지
 ---
 # Xero
 
-## 최신 (2026-07-02, 2차) — 다음 세션 시작점
+## 최신 (2026-07-07, 2차)
+**관리자 매뉴얼 docx + 검증 UI/요율 구조 진단** — [[2026-07-07-admin-manual-validation-diagnosis]]
+- 매뉴얼: `CareTokSolutions/bDocs/CareTok_Xero_Admin_Manual_20260707.docx` (한글, 실서버 캡처 13장, ★처음 세팅 순서 포함). 실서버는 read-only로만 접근.
+- 진단 확정: 접이식 카드 미표시 = 전 행 EXCLUDED → active 0건 → **0건 카드 숨김 설계**(버그 아님) / 요율은 조합 테이블 라이브 조인이라 탭만 채워도 반영되나 **직원 매핑 선행 필수**(R.TenantId=EM.TenantId) / ★Exclude 체크박스 = 체크가 "포함"(컬럼명과 반대).
+- 실서버 배치 #9(01.07~12.07, 1,171행): Pending 898, 차단 unmapped 136·missing 39·period BLOCK 76(01~05.07 근무=열린기간 밖, 컷오버 이슈).
+
+## 이전 (2026-07-07, 1차) — 다음 세션 시작점
+**멀티테넌트(2조직) 개편 설계→구현→라이브 가동 완료** — [[2026-07-07-multitenant-two-org-live]] ★다음 할 일 체크리스트 이 로그에 있음
+- 근본원인 확정: Xero 조직당 200명 제한 → A~J=ODC Payroll / K~Z=**ONE DREAM COMMUNITY PTY LTD("ODC"는 약칭)**. Auto-Map 41/234는 K~Z가 연결 조직에 없어서였음.
+- 핵심 구조: EmployeeMapping.TenantId 진실원본 / 배치 tenant 불가지·전송 시 GroupBy / (BatchId,TenantId)당 PayRun 자식 테이블 / rotating refresh는 single-flight 갱신 후 전 행 upsert / SP 신규 파라미터 전부 기본값(배포창 호환).
+- 라이브: 재연결 1회로 2조직 저장+Demo 자동정리 실증. 직원 87(45+42)·요율 31(23+8) 매핑. 요율 자동매핑 실패 2원인=ATTENDANT CARE 명세밖·ABP 중복이름(유일성 가드). Pay Period BLOCK=열린기간 밖 근무(컷오버: ~05.07 Deputy / 06.07~ CareTalk 제안).
+- ★브랜치 사고 교훈: 작업 폴더 공유 시 에이전트 투입 전 브랜치·핵심 코드 grep 확인(구시점 분기 브랜치 체크아웃으로 접이식 UI가 구버전 위에 구현→리셋 후 재적용 d54aaf5a).
+
+## 이전 (2026-07-02, 2차)
 **실조직(ODC Payroll) 연결 완료 + 매핑 계획 확정** — [[2026-07-02-odc-connect-mapping-plan-2]] ★잔여 작업 체크리스트(A~D) 이 로그에 있음
 - 권한: 앱 연결엔 Payroll admin + **Business and accounting=Standard** 둘 다 필요(전자만으론 "More permission required"). 권한 변경 후 Xero 재로그인 필수.
 - 함정 2개 실전 확인: ①상태카드는 DB만 봐서 "Connected" 착시 가능(콜백 유실 시 반쪽연결 — SyncLog CONNECT로 판별) ②동의 화면 "Already connected" 상태에선 드롭다운 안 건드리고 Continue가 정답.
@@ -46,3 +59,5 @@ OAuth 실서버 연결 + Area 잘림 정정 + 배치 그리드 먹통 해소 —
 - [[2026-07-01-prod-deploy-13sp-sync]] — 실서버 배포(DEPLOY 29SP) / 배포파일 stale로 13SP 드리프트 발견(정규화 해시 서버대서버 대조, 평문 CREATE PROCEDURE 오탐 회피) / 테스트 현재정의 hex 무손실 추출→`20260701_sync_xero_13sp_test_to_live.sql`로 정정 / 재대조 38/38 0diff 검증
 - [[2026-07-02-oauth-area-fix-grid-perf]] — OAuth 실서버 연결(env var 주입·www redirect_uri 해결·★Demo Company 연결됨) / Area VARCHAR(10) 잘림 정정(`20260702_fix_xero_area_width.sql`, 라이브만 적용·테스트 드리프트) / 배치그리드 30초+ 프리즈 실측→지연옵션+200행 페이징으로 2.7초(라이브 검증) / 배치#2 삭제=에릭 추정
 - [[2026-07-02-odc-connect-mapping-plan-2]] — 실조직 ODC Payroll 연결(Standard 역할 필요 발견·반쪽연결 진단·CONNECT 16:59 DB확인) / Auto-Map 요율 22(명세 F/P 일치)·직원 41 / Pay Items 실사(캐주얼 기존재·수당 3종 $0.99·$3·$20.82=Deputy 방식→$1.00 신규 생성 방향) / 미매핑 26조합 실측표 / ★잔여 작업 체크리스트 A~D
+- [[2026-07-07-multitenant-two-org-live]] — 멀티테넌트(2조직) 개편 전체 사이클: 200명 제한 근본원인 확정(K~Z=ONE DREAM COMMUNITY) / 아키텍처 결정 9(TenantId 진실원본·배치 불가지·PayRun 자식테이블·single-flight refresh) / SQL 2본+4레이어 구현+QA·verify·simplify / 라이브 2조직 연결·Demo 자동정리·직원 87·요율 31 / 운영지식(요율 스킵 2원인·Pay Period 컷오버·미매핑 165 분류) / 접이식 UI+브랜치 사고 교훈
+- [[2026-07-07-admin-manual-validation-diagnosis]] — 관리자 매뉴얼 docx(실서버 캡처 13장, 처음 세팅 순서 포함, bDocs) / 접이식 카드 미표시=0건 숨김 설계 확인 / 요율=조합 테이블 라이브 조인·직원 매핑 선행(R.TenantId=EM.TenantId) / Exclude 체크=포함 주의 / 실서버 배치 #9 차단 현황(136·39·76) / Playwright 실서버 캡처 팁(스크롤 고정 우회·탭 복원·LogIn 경로)
