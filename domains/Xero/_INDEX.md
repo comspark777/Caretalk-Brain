@@ -1,11 +1,19 @@
 ---
 domain: Xero
-updated: 2026-07-07
-status: 멀티테넌트 라이브 + 관리자 매뉴얼 docx 완성(실서버 캡처 13장, bDocs). 실서버 배치 #9=unmapped 136·missing 39·period BLOCK 76. 남은 것=매칭보강 패치(승인대기)·회계 3건·PayItem $1.00×2조직·컷오버 합의 후 골든패스·접이식UI 머지
+updated: 2026-07-14
+status: 골든패스 Step2 차단 버그 2건(캘린더 선택 초기화·기전송 재실행 차단) 수정·실서버 배포 + 캘린더 셀렉트 개선(기간·인원·자동선택). 15.07 회계팀 전체 데이터 락 테스트 예정. 남은 것=매칭보강 패치·회계 3건·PayItem $1.00×2조직·접이식UI 머지·커밋 2건 머지
 ---
 # Xero
 
-## 최신 (2026-07-07, 2차)
+## 최신 (2026-07-14)
+**PayRun Step2 차단 버그 2건 수정 + 캘린더 셀렉트 개선** — [[2026-07-14-payrun-step2-calendar-resume-fix]]
+- 회계팀 첫 골든패스 실행(배치 #14): Step 1 타임시트 approved 실증. Step 2 진입은 버그 2건으로 구조적 불가였음 → 수정·실서버 배포(커밋 `39ca38e2`·`8ce2d44a`, ★2026.07.13-QuickClaim 브랜치·미머지).
+- 버그①: Step 1 직후 재렌더가 캘린더 선택값 초기화(자식 행 CalendarId는 PAYRUN_CREATED 후에야 저장) → 뭘 골라도 실패. 화면 선택값 캡처·폴백 복원으로 수정.
+- 버그②: 전 행 기전송 재실행을 "no rows available"로 차단(매뉴얼의 완료단계 스킵 미구현) → 구조 판정(검증 0+자식 행 존재)으로 성공 통과·Step 2 재개.
+- 셀렉트 개선: 동명 Fortnightly 5개 구분 불가 → 라벨에 열린기간+"N in this batch" 병기, 소속 캘린더 1개면 자동 선택. 캘린더=직원의 Xero 배정 소속(옵션 아님) 원칙 문서화.
+- 연결 카드 "(expired)"=유휴 만료 정상(Refresh Status는 토큰 갱신 아님, 실작업이 곧 갱신). 15.07 락 테스트에서 Step 2~4 첫 통과 확인 예정(Posting 전 DRAFT 수당 이중곱 확인).
+
+## 이전 (2026-07-07, 2차)
 **관리자 매뉴얼 docx + 검증 UI/요율 구조 진단** — [[2026-07-07-admin-manual-validation-diagnosis]]
 - 매뉴얼: `CareTokSolutions/bDocs/CareTok_Xero_Admin_Manual_20260707.docx` (한글, 실서버 캡처 13장, ★처음 세팅 순서 포함). 실서버는 read-only로만 접근.
 - 진단 확정: 접이식 카드 미표시 = 전 행 EXCLUDED → active 0건 → **0건 카드 숨김 설계**(버그 아님) / 요율은 조합 테이블 라이브 조인이라 탭만 채워도 반영되나 **직원 매핑 선행 필수**(R.TenantId=EM.TenantId) / ★Exclude 체크박스 = 체크가 "포함"(컬럼명과 반대).
@@ -61,3 +69,4 @@ OAuth 실서버 연결 + Area 잘림 정정 + 배치 그리드 먹통 해소 —
 - [[2026-07-02-odc-connect-mapping-plan-2]] — 실조직 ODC Payroll 연결(Standard 역할 필요 발견·반쪽연결 진단·CONNECT 16:59 DB확인) / Auto-Map 요율 22(명세 F/P 일치)·직원 41 / Pay Items 실사(캐주얼 기존재·수당 3종 $0.99·$3·$20.82=Deputy 방식→$1.00 신규 생성 방향) / 미매핑 26조합 실측표 / ★잔여 작업 체크리스트 A~D
 - [[2026-07-07-multitenant-two-org-live]] — 멀티테넌트(2조직) 개편 전체 사이클: 200명 제한 근본원인 확정(K~Z=ONE DREAM COMMUNITY) / 아키텍처 결정 9(TenantId 진실원본·배치 불가지·PayRun 자식테이블·single-flight refresh) / SQL 2본+4레이어 구현+QA·verify·simplify / 라이브 2조직 연결·Demo 자동정리·직원 87·요율 31 / 운영지식(요율 스킵 2원인·Pay Period 컷오버·미매핑 165 분류) / 접이식 UI+브랜치 사고 교훈
 - [[2026-07-07-admin-manual-validation-diagnosis]] — 관리자 매뉴얼 docx(실서버 캡처 13장, 처음 세팅 순서 포함, bDocs) / 접이식 카드 미표시=0건 숨김 설계 확인 / 요율=조합 테이블 라이브 조인·직원 매핑 선행(R.TenantId=EM.TenantId) / Exclude 체크=포함 주의 / 실서버 배치 #9 차단 현황(136·39·76) / Playwright 실서버 캡처 팁(스크롤 고정 우회·탭 복원·LogIn 경로)
+- [[2026-07-14-payrun-step2-calendar-resume-fix]] — 골든패스 Step2 차단 버그 2건 수정·배포(캘린더 선택 초기화=재렌더가 화면값 소실 / 기전송 재실행 차단=no-rows 오분류→구조 판정으로 재개) / 캘린더 셀렉트 개선(열린기간·N in this batch·1개면 자동선택) / "(expired)"=유휴 만료 정상 / 15.07 락 테스트 예정
